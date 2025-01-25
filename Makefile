@@ -4,7 +4,7 @@ MD_FILE = README.md
 
 # Target to render the .qmd file into a .md file
 $(MD_FILE): $(QMD_FILE)
-	pandoc readme.qmd -o README.md
+	quarto render $(QMD_FILE) --to markdown --output $(MD_FILE)
 
 # Phony target to clean up generated files
 .PHONY: clean

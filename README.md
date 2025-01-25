@@ -1,3 +1,15 @@
+---
+author:
+- aemonge <andres@aemonge.com>
+authors:
+- aemonge <andres@aemonge.com>
+date: 2022-10-03
+execute:
+  eval: true
+title: Breezeflow
+toc-title: Table of contents
+---
+
 # BreezeFlow - A Lighter AirFlow - Task Orchestration
 
 `breezeflow` is a lightweight task orchestration tool designed for
@@ -39,23 +51,36 @@ functionality.
 
 1.  **Run a long command without a "while" command**:
 
-`{bash} breezeflow 'sleep 2'`
+``` {bash}
+breezeflow 'sleep 2'
+```
 
 2.  **Run a command with a "while" command to monitor progress**:
 
-`{bash} breezeflow 'sleep 5' -w 'echo "Main command is running..."'`
+``` {bash}
+breezeflow 'sleep 5' -w 'echo "Main command is running..."'
+```
 
 3.  **Simulate success with a callback**:
 
-`{bash} breezeflow 'sleep 2 && true' -s 'echo "Success!"'`
+``` {bash}
+breezeflow 'sleep 2 && true' -s 'echo "Success!"'
+```
 
 4.  **Simulate failure with retries**:
 
-`{bash} breezeflow 'sleep 2 && false' -f 'echo "Failure!"' \    --delay 2 --max-attempts 5`
+``` {bash}
+breezeflow 'sleep 2 && false' -f 'echo "Failure!"' \
+   --delay 2 --max-attempts 5
+```
 
 5.  **Combine all options with verbose output**:
 
-`{bash} breezeflow 'sleep 5' -w 'echo "Monitoring..."' \    -s 'echo "Done!"' -f 'echo "Failed!"' \    --delay 1 --max-attempts 3 -v`
+``` {bash}
+breezeflow 'sleep 5' -w 'echo "Monitoring..."' \
+   -s 'echo "Done!"' -f 'echo "Failed!"' \
+   --delay 1 --max-attempts 3 -v
+```
 
 ### Notes
 
