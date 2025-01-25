@@ -45,147 +45,157 @@ fail_n_times() {
 }
 export -f fail_n_times
 
-# Test 1: Basic usage with success
-run_test "49: Basic success" "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\"'"
+# Group --on-success: Tests for --on-success behavior
+echo -e "${CYAN}Group --on-success: Tests for --on-success behavior${NC}"
 
-# Test 2: Basic usage with failure
-run_test "54: Basic failure" "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-fail 'echo \"Failure!\"'"
-
-# Test 3: Simulate --on-fail failing 4 times (within max attempts)
-rm -f /tmp/fail_count.txt
-run_test "60: --on-fail fails 4 times (within max attempts)" \
-    "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-fail 'fail_n_times 4' --delay 1 --max-attempts 5"
-
-# Test 4: Simulate --on-fail failing more times than allowed
-rm -f /tmp/fail_count.txt
-run_test "67: --on-fail fails more times than allowed" \
-    "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-fail 'fail_n_times 6' --delay 1 --max-attempts 5" \
-    1 # Expected exit code: 1 (failure)
-
-# Test 5: Simulate --on-succeed failing
-run_test "74: --on-succeed fails" "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && false'"
-
-# Test 6: Simulate --during failing
-run_test "79: --during fails" "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\" && false' \
---on-succeed 'echo \"Success!\"'"
-
-# Test 7: Simulate --during failing and --on-fail failing
-run_test "84: --during fails and --on-fail fails" \
+# Test 1: --on-success succeeds when main command succeeds
+run_test "Group --on-success: Test 1: --on-success succeeds => Expected exit code: 0" \
     "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\" && false' \
+--on-succeed 'echo \"Success!\"'"
+
+# Test 2: --on-success fails when main command succeeds
+run_test "Group --on-success: Test 2: --on-success fails => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--on-succeed 'echo \"Success!\" && false'" \
+    1
+
+# Test 3: --on-success succeeds after 4 retries (within max attempts)
+rm -f /tmp/fail_count.txt
+run_test "Group --on-success: Test 3: --on-success succeeds after 4 retries => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && true' \
+--on-succeed 'fail_n_times 4' --max-attempts 5 --delay 1"
+
+# Test 4: --on-success fails after exceeding max attempts
+rm -f /tmp/fail_count.txt
+run_test "Group --on-success: Test 4: --on-success fails after exceeding max attempts => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--on-succeed 'fail_n_times 6' --max-attempts 5 --delay 1" \
+    1
+
+# Group --on-fail: Tests for --on-fail behavior
+echo -e "${CYAN}Group --on-fail: Tests for --on-fail behavior${NC}"
+
+# Test 5: --on-fail succeeds when main command fails
+run_test "Group --on-fail: Test 5: --on-fail succeeds => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && false' \
+--on-fail 'echo \"Failure!\" && true'"
+
+# Test 6: --on-fail fails when main command fails
+run_test "Group --on-fail: Test 6: --on-fail fails => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && false' \
+--on-fail 'echo \"Failure!\" && false'" \
+    1
+
+# Test 7: --on-fail succeeds after 4 retries (within max attempts)
+rm -f /tmp/fail_count.txt
+run_test "Group --on-fail: Test 7: --on-fail succeeds after 4 retries => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && false' \
+--on-fail 'fail_n_times 4' --max-attempts 5 --delay 1"
+
+# Test 8: --on-fail fails after exceeding max attempts
+rm -f /tmp/fail_count.txt
+run_test "Group --on-fail: Test 8: --on-fail fails after exceeding max attempts => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && false' \
+--on-fail 'fail_n_times 6' --max-attempts 5 --delay 1" \
+    1
+
+# Group --during: Tests for --during behavior
+echo -e "${CYAN}Group --during: Tests for --during behavior${NC}"
+
+# Test 9: --during succeeds when main command succeeds
+run_test "Group --during: Test 9: --during succeeds => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\"'"
+
+# Test 10: --during fails when main command succeeds
+run_test "Group --during: Test 10: --during fails => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\" && false'" \
+    1
+
+# Test 11: --during succeeds after 4 retries (within max attempts)
+rm -f /tmp/fail_count.txt
+run_test "Group --during: Test 11: --during succeeds after 4 retries => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'fail_n_times 4' --max-attempts 5 --delay 1"
+
+# Test 12: --during fails after exceeding max attempts
+rm -f /tmp/fail_count.txt
+run_test "Group --during: Test 12: --during fails after exceeding max attempts => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'fail_n_times 6' --max-attempts 5 --delay 1" \
+    1
+
+# Group --on-success and --on-fail: Tests for combined behavior
+echo -e "${CYAN}Group --on-success and --on-fail: Tests for combined behavior${NC}"
+
+# Test 13: --on-success succeeds and --on-fail fails (ignored)
+run_test "Group --on-success and --on-fail: Test 13: --on-success succeeds and --on-fail fails => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && true' \
+--on-succeed 'echo \"Success!\" && true' \
 --on-fail 'echo \"Failure!\" && false'"
 
-# Test 8: Simulate --during failing and --on-succeed failing
-run_test "90: --during fails and --on-succeed fails" \
+# Test 14: --on-success fails and --on-fail succeeds
+run_test "Group --on-success and --on-fail: Test 14: --on-success fails and --on-fail succeeds => Expected exit code: 1" \
     "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\" && false' \
---on-succeed 'echo \"Success!\" && false'"
-
-# Test 9: Simulate --on-succeed succeeding
-run_test "96: --on-succeed succeeds" "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && true'"
-
-# Test 10: Simulate --on-fail succeeding after retries
-rm -f /tmp/fail_count.txt
-run_test "102: --on-fail succeeds after retries" \
-    "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-fail 'fail_n_times 4' --delay 1 --max-attempts 5"
-
-# Test 11: Simulate --on-fail succeeding immediately
-run_test "108: --on-fail succeeds immediately" \
-    "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-fail 'echo \"Failure!\" && true'"
-
-# Test 12: Simulate --on-succeed failing and --on-fail succeeding
-run_test "114: --on-succeed fails and --on-fail succeeds" \
-    "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
 --on-succeed 'echo \"Success!\" && false' \
---on-fail 'echo \"Failure!\" && true'"
+--on-fail 'echo \"Failure!\" && true'" \
+    1
 
-# Test 13: Simulate --on-succeed failing and --on-fail failing
-run_test "121: --on-succeed fails and --on-fail fails" \
+# Test 15: --on-success fails and --on-fail fails
+run_test "Group --on-success and --on-fail: Test 15: --on-success fails and --on-fail fails => Expected exit code: 1" \
     "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
 --on-succeed 'echo \"Success!\" && false' \
 --on-fail 'echo \"Failure!\" && false'" \
-    1 # Expected exit code: 1 (failure)
+    1
 
-# Test 14: Simulate --on-succeed succeeding and --on-fail failing
-run_test "129: --on-succeed succeeds and --on-fail fails" \
+# Group --during and --on-fail: Tests for combined behavior
+echo -e "${CYAN}Group --during and --on-fail: Tests for combined behavior${NC}"
+
+# Test 16: --during fails and --on-fail succeeds
+run_test "Group --during and --on-fail: Test 16: --during fails and --on-fail succeeds => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\" && false' \
+--on-fail 'echo \"Failure!\" && true'" \
+    1
+
+# Test 17: --during fails and --on-fail fails
+run_test "Group --during and --on-fail: Test 17: --during fails and --on-fail fails => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\" && false' \
+--on-fail 'echo \"Failure!\" && false'" \
+    1
+
+# Group --during and --on-success: Tests for combined behavior
+echo -e "${CYAN}Group --during and --on-success: Tests for combined behavior${NC}"
+
+# Test 18: --during fails and --on-success succeeds
+run_test "Group --during and --on-success: Test 18: --during fails and --on-success succeeds => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\" && false' \
+--on-succeed 'echo \"Success!\" && true'" \
+    1
+
+# Test 19: --during fails and --on-success fails
+run_test "Group --during and --on-success: Test 19: --during fails and --on-success fails => Expected exit code: 1" \
+    "$CMD '$MAIN_CMD && true' \
+--during 'echo \"Main command is running...\" && false' \
+--on-succeed 'echo \"Success!\" && false'" \
+    1
+
+# Group Race Conditions: Tests for race conditions with --during
+echo -e "${CYAN}Group Race Conditions: Tests for race conditions with --during${NC}"
+
+# Test 20: Race condition with --during and --on-success
+run_test "Group Race Conditions: Test 20: Race condition with --during and --on-success => Expected exit code: 0" \
     "$CMD '$MAIN_CMD && true' \
 --during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && true' \
---on-fail 'echo \"Failure!\" && false'"
-
-# Test 15: Simulate --on-succeed succeeding and --on-fail succeeding
-run_test "136: --on-succeed succeeds and --on-fail succeeds" \
-    "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && true' \
---on-fail 'echo \"Failure!\" && true'"
-
-# Test 16: Simulate --on-succeed failing and --on-fail succeeding after retries
-rm -f /tmp/fail_count.txt
-run_test "144: --on-succeed fails and --on-fail succeeds after retries" \
-    "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && false' \
---on-fail 'fail_n_times 4' --delay 1 --max-attempts 5"
-
-# Test 17: Simulate --on-succeed failing and --on-fail failing after retries
-rm -f /tmp/fail_count.txt
-run_test "152: --on-succeed fails and --on-fail fails after retries" \
-    "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && false' \
---on-fail 'fail_n_times 6' --delay 1 --max-attempts 5" \
-    1 # Expected exit code: 1 (failure)
-
-# Test 18: Simulate --on-succeed succeeding and --on-fail failing after retries
-rm -f /tmp/fail_count.txt
-run_test "161: --on-succeed succeeds and --on-fail fails after retries" \
-    "$CMD '$MAIN_CMD && false' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && true' \
---on-fail 'fail_n_times 6' --delay 1 --max-attempts 5" \
-    1 # Expected exit code: 1 (failure)
-
-# Test 19: Simulate --on-succeed succeeding and --on-fail succeeding after retries
-rm -f /tmp/fail_count.txt
-run_test "170: --on-succeed succeeds and --on-fail succeeds after retries" \
-    "$CMD '$MAIN_CMD && true' \
---during 'echo \"Main command is running...\"' \
---on-succeed 'echo \"Success!\" && true' \
---on-fail 'fail_n_times 4' --delay 1 --max-attempts 5"
-
-# Test 20: Simulate --during failing four times but succeeding on the fifth attempt
-rm -f /tmp/fail_count.txt
-run_test "178: --during fails four times but succeeds on the fifth attempt" \
-    "$CMD '$MAIN_CMD && true' \
---during 'fail_n_times 4' \
 --on-succeed 'echo \"Success!\"'"
 
-# Test 21: Simulate --during failing six times (exceeding max attempts)
-rm -f /tmp/fail_count.txt
-run_test "185: --during fails six times (exceeding max attempts)" \
-    "$CMD '$MAIN_CMD && true' \
---during 'fail_n_times 6' \
---on-succeed 'echo \"Success!\"'" \
-    1 # Expected exit code: 1 (failure)
+# Test 21: Race condition with --during and --on-fail
+run_test "Group Race Conditions: Test 21: Race condition with --during and --on-fail => Expected exit code: 0" \
+    "$CMD '$MAIN_CMD && false' \
+--during 'echo \"Main command is running...\"' \
+--on-fail 'echo \"Failure!\" && true'"
 
 echo "All tests completed successfully."
