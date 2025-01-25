@@ -1,20 +1,3 @@
----
-title: Breezeflow
-format: gfm
-author: aemonge <andres@aemonge.com>
-date: '2022-10-03'
-execute:
-  eval: true
-  echo: true
-  warning: true
-  output: true
-exclude:
-  - title
-  - author
-  - date
----
-
-
 # BreezeFlow - A Lighter AirFlow - Task Orchestration
 
 `breezeflow` is a lightweight task orchestration tool designed for

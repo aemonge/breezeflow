@@ -1,5 +1,5 @@
 # Define the input and output files
-QMD_FILE = readme.qmd
+QMD_FILE = breezeflow.qmd
 MD_FILE = README.md
 
 # Target to render the .qmd file into a .md file
