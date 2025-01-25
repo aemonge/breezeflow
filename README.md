@@ -24,35 +24,45 @@ functionality.
 
 ### Options
 
--   `--during <command>`: Command to run concurrently with the main
+-   `-w, --while <command>`: Command to run concurrently with the main
     command.
--   `--on-succeed <command>`: Command to run if the main command
+-   `-s, --succeed <command>`: Command to run if the main command
     succeeds.
--   `--on-fail <command>`: Command to run if the main command fails.
+-   `-f, --fail <command>`: Command to run if the main command fails.
 -   `--delay <seconds>`: (default: 1) Delay between retry attempts for
-    during, on-succeed, and on-fail.
+    `--while`, `--succeed`, and `--fail`.
 -   `--max-attempts <number>`: (default: 3) Maximum retry attempts for
-    during, on-succeed, and on-fail.
+    `--while`, `--succeed`, and `--fail`.
+-   `-v, --verbose`: Enable verbose output for debugging.
 
 ### Examples
 
-1.  Run a long command with a "during" command:
+1.  **Run a long command without a "while" command**:
 
-`{bash} breezeflow 'sleep 2' --during 'echo "Main command is running..."'`
+`{bash} breezeflow 'sleep 2'`
 
-2.  Simulate success with a callback:
+2.  **Run a command with a "while" command to monitor progress**:
 
-`{bash} breezeflow 'sleep 2 && true' \    --during 'echo "Main command is running..."' \    --on-succeed 'echo "Success!"'`
+`{bash} breezeflow 'sleep 5' -w 'echo "Main command is running..."'`
 
-3.  Simulate failure with retries:
+3.  **Simulate success with a callback**:
 
-`{bash} breezeflow 'sleep 2 && false' \    --during 'echo "Main command is running..."' \    --on-fail 'echo "Failure!"' \    --delay 2 --max-attempts 5`
+`{bash} breezeflow 'sleep 2 && true' -s 'echo "Success!"'`
+
+4.  **Simulate failure with retries**:
+
+`{bash} breezeflow 'sleep 2 && false' -f 'echo "Failure!"' \    --delay 2 --max-attempts 5`
+
+5.  **Combine all options with verbose output**:
+
+`{bash} breezeflow 'sleep 5' -w 'echo "Monitoring..."' \    -s 'echo "Done!"' -f 'echo "Failed!"' \    --delay 1 --max-attempts 3 -v`
 
 ### Notes
 
 -   The tool returns the exit code of the main command for caller
     feedback.
 -   Commands can be shell commands or exported functions.
+-   Use `-v, --verbose` to enable debug output for retries and progress.
 
 ## Why Gleam?
 

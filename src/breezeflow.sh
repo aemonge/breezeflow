@@ -2,9 +2,9 @@
 
 # Function to display help
 show_help() {
-    echo "Usage: $0 <main_command> [-w|--while <inform_command>] \\"
-    echo "          [-s|--succeed <success_command>] [-f|--fail <failover_command>] \\"
-    echo "          [--delay <seconds>] [--max-attempts <number>]"
+    echo "Usage: $0 <main_command> [-w|--while <inform_command>]"
+    echo "          [-s|--succeed <success_command>] [-f|--fail <failover_command>]"
+    echo "          [--delay <seconds>] [--max-attempts <number>] [-v|--verbose]"
     echo ""
     echo "Options:"
     echo "  -w, --while      The command/function to run while the main command is running (optional)."
@@ -12,6 +12,7 @@ show_help() {
     echo "  -f, --fail       The command/function to run if the main command fails (optional)."
     echo "  --delay          The delay (in seconds) between retries for the failover command (default: 1)."
     echo "  --max-attempts   The maximum number of retry attempts for the failover command (default: 3)."
+    echo "  -v, --verbose    Enable verbose output (optional)."
     echo ""
     echo "Examples:"
     echo "  1. Run a long command without a 'while' command:"
@@ -39,6 +40,7 @@ parse_arguments() {
     # Default values for optional arguments
     DELAY=1
     MAX_ATTEMPTS=3
+    VERBOSE=false
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -61,6 +63,10 @@ parse_arguments() {
         --max-attempts)
             MAX_ATTEMPTS="$2"
             shift 2
+            ;;
+        -v | --verbose)
+            VERBOSE=true
+            shift
             ;;
         -h | --help)
             show_help
@@ -98,13 +104,17 @@ retry_with_delay() {
     local attempt=1
 
     while [ $attempt -le $max_attempts ]; do
-        echo "Attempt $attempt of $max_attempts:"
+        if $VERBOSE; then
+            echo "Attempt $attempt of $max_attempts:"
+        fi
         if execute "$cmd"; then
             return 0 # Success
         fi
         attempt=$((attempt + 1))
         if [ $attempt -le $max_attempts ]; then
-            echo "Retrying in $delay seconds..."
+            if $VERBOSE; then
+                echo "Retrying in $delay seconds..."
+            fi
             sleep "$delay"
         fi
     done
@@ -120,10 +130,10 @@ task_orchestrator() {
     execute "$MAIN_CMD" &
     MAIN_PID=$!
 
-    # Run the "during" command with retries (if provided)
+    # Run the "while" command with retries (if provided)
     if [ -n "$DURING_CMD" ]; then
         if ! retry_with_delay "$DURING_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
-            echo "Error: --during command failed after retries."
+            echo "Error: --while command failed after retries."
             exit 1
         fi
     fi
@@ -136,7 +146,7 @@ task_orchestrator() {
     if [ $MAIN_STATUS -eq 0 ]; then
         if [ -n "$ON_SUCCEED_CMD" ]; then
             if ! retry_with_delay "$ON_SUCCEED_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
-                echo "Error: --on-succeed command failed after retries."
+                echo "Error: --succeed command failed after retries."
                 exit 1
             fi
         fi
@@ -144,7 +154,7 @@ task_orchestrator() {
     else
         if [ -n "$ON_FAIL_CMD" ]; then
             if ! retry_with_delay "$ON_FAIL_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
-                echo "Error: --on-fail command failed after retries."
+                echo "Error: --fail command failed after retries."
                 exit 1
             fi
         else
