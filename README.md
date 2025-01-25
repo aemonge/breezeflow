@@ -1,14 +1,19 @@
 ---
-author:
-- aemonge <andres@aemonge.com>
-authors:
-- aemonge <andres@aemonge.com>
-date: 2022-10-03
+title: Breezeflow
+format: gfm
+author: aemonge <andres@aemonge.com>
+date: '2022-10-03'
 execute:
   eval: true
-title: Breezeflow
-toc-title: Table of contents
+  echo: true
+  warning: true
+  output: true
+exclude:
+  - title
+  - author
+  - date
 ---
+
 
 # BreezeFlow - A Lighter AirFlow - Task Orchestration
 
@@ -19,14 +24,14 @@ cross-platform compatibility.
 
 ## Features
 
--   **Performance**: Optimized for large-scale task orchestration.
--   **Safety**: Gleam's strong type system ensures reliability and
-    prevents runtime\
-    errors.
--   **Concurrency**: Efficient parallel execution with Gleam's
-    concurrency model.
--   **Cross-platform**: Portable binaries for all major OSes.
--   **Extensibility**: Integration with Gleam's growing ecosystem.
+- **Performance**: Optimized for large-scale task orchestration.
+- **Safety**: Gleam’s strong type system ensures reliability and
+  prevents runtime  
+  errors.
+- **Concurrency**: Efficient parallel execution with Gleam’s concurrency
+  model.
+- **Cross-platform**: Portable binaries for all major OSes.
+- **Extensibility**: Integration with Gleam’s growing ecosystem.
 
 ## Usage
 
@@ -36,26 +41,26 @@ functionality.
 
 ### Options
 
--   `-w, --while <command>`: Command to run concurrently with the main
-    command.
--   `-s, --succeed <command>`: Command to run if the main command
-    succeeds.
--   `-f, --fail <command>`: Command to run if the main command fails.
--   `--delay <seconds>`: (default: 1) Delay between retry attempts for
-    `--while`, `--succeed`, and `--fail`.
--   `--max-attempts <number>`: (default: 3) Maximum retry attempts for
-    `--while`, `--succeed`, and `--fail`.
--   `-v, --verbose`: Enable verbose output for debugging.
+- `-w, --while <command>`: Command to run concurrently with the main
+  command.
+- `-s, --succeed <command>`: Command to run if the main command
+  succeeds.
+- `-f, --fail <command>`: Command to run if the main command fails.
+- `--delay <seconds>`: (default: 1) Delay between retry attempts for
+  `--while`, `--succeed`, and `--fail`.
+- `--max-attempts <number>`: (default: 3) Maximum retry attempts for
+  `--while`, `--succeed`, and `--fail`.
+- `-v, --verbose`: Enable verbose output for debugging.
 
 ### Examples
 
-1.  **Run a long command without a "while" command**:
+1.  **Run a long command without a “while” command**:
 
 ``` {bash}
 breezeflow 'sleep 2'
 ```
 
-2.  **Run a command with a "while" command to monitor progress**:
+2.  **Run a command with a “while” command to monitor progress**:
 
 ``` {bash}
 breezeflow 'sleep 5' -w 'echo "Main command is running..."'
@@ -84,25 +89,25 @@ breezeflow 'sleep 5' -w 'echo "Monitoring..."' \
 
 ### Notes
 
--   The tool returns the exit code of the main command for caller
-    feedback.
--   Commands can be shell commands or exported functions.
--   Use `-v, --verbose` to enable debug output for retries and progress.
+- The tool returns the exit code of the main command for caller
+  feedback.
+- Commands can be shell commands or exported functions.
+- Use `-v, --verbose` to enable debug output for retries and progress.
 
 ## Why Gleam?
 
 The choice of Gleam brings several advantages:
 
--   **Performance**: Gleam's lightweight runtime ensures efficient task
-    execution.
--   **Safety**: Gleam's strong type system and immutability prevent
-    runtime errors.
--   **Concurrency**: Gleam's actor-based concurrency model enables
-    efficient parallelism.
--   **Cross-platform**: Gleam's portability simplifies deployment across
-    OSes.
--   **Extensibility**: Integration with Gleam's ecosystem enhances
-    functionality.
+- **Performance**: Gleam’s lightweight runtime ensures efficient task
+  execution.
+- **Safety**: Gleam’s strong type system and immutability prevent
+  runtime errors.
+- **Concurrency**: Gleam’s actor-based concurrency model enables
+  efficient parallelism.
+- **Cross-platform**: Gleam’s portability simplifies deployment across
+  OSes.
+- **Extensibility**: Integration with Gleam’s ecosystem enhances
+  functionality.
 
 ## Getting Started
 
