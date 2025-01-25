@@ -2,31 +2,35 @@
 
 # Function to display help
 show_help() {
-    echo "Usage: $0 <main_command> --during <inform_command> \\"
-    echo "          [--on-succeed <success_command>] [--on-fail <failover_command>] \\"
+    echo "Usage: $0 <main_command> [-w|--while <inform_command>] \\"
+    echo "          [-s|--succeed <success_command>] [-f|--fail <failover_command>] \\"
     echo "          [--delay <seconds>] [--max-attempts <number>]"
     echo ""
     echo "Options:"
-    echo "  --during         The command/function to run while the main command is running."
-    echo "  --on-succeed     The command/function to run if the main command succeeds (optional)."
-    echo "  --on-fail        The command/function to run if the main command fails (optional)."
+    echo "  -w, --while      The command/function to run while the main command is running (optional)."
+    echo "  -s, --succeed    The command/function to run if the main command succeeds (optional)."
+    echo "  -f, --fail       The command/function to run if the main command fails (optional)."
     echo "  --delay          The delay (in seconds) between retries for the failover command (default: 1)."
     echo "  --max-attempts   The maximum number of retry attempts for the failover command (default: 3)."
     echo ""
     echo "Examples:"
-    echo "  1. Run a long command with a 'during' command:"
-    echo "     $0 'sleep 2' --during 'echo \"Main command is running...\"'"
+    echo "  1. Run a long command without a 'while' command:"
+    echo "     $0 'sleep 2'"
     echo ""
-    echo "  2. Simulate success with a callback:"
-    echo "     $0 'sleep 2 && true' \\"
-    echo "         --during 'echo \"Main command is running...\"' \\"
-    echo "         --on-succeed 'echo \"Success!\"'"
+    echo "  2. Run a command with a 'while' command to monitor progress:"
+    echo "     $0 'sleep 5' -w 'echo \"Main command is running...\"'"
     echo ""
-    echo "  3. Simulate failure with retries:"
-    echo "     $0 'sleep 2 && false' \\"
-    echo "         --during 'echo \"Main command is running...\"' \\"
-    echo "         --on-fail 'echo \"Failure!\"' \\"
+    echo "  3. Simulate success with a callback:"
+    echo "     $0 'sleep 2 && true' -s 'echo \"Success!\"'"
+    echo ""
+    echo "  4. Simulate failure with retries:"
+    echo "     $0 'sleep 2 && false' -f 'echo \"Failure!\"' \\"
     echo "         --delay 2 --max-attempts 5"
+    echo ""
+    echo "  5. Combine all options:"
+    echo "     $0 'sleep 5' -w 'echo \"Monitoring...\"' \\"
+    echo "         -s 'echo \"Done!\"' -f 'echo \"Failed!\"' \\"
+    echo "         --delay 1 --max-attempts 3"
     exit 1
 }
 
@@ -38,15 +42,15 @@ parse_arguments() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-        --during)
+        -w | --while)
             DURING_CMD="$2"
             shift 2
             ;;
-        --on-succeed)
+        -s | --succeed)
             ON_SUCCEED_CMD="$2"
             shift 2
             ;;
-        --on-fail)
+        -f | --fail)
             ON_FAIL_CMD="$2"
             shift 2
             ;;
@@ -69,8 +73,8 @@ parse_arguments() {
     done
 
     # Validate required arguments
-    if [ -z "$MAIN_CMD" ] || [ -z "$DURING_CMD" ]; then
-        echo "Error: <main_command> and --during are required." >&2
+    if [ -z "$MAIN_CMD" ]; then
+        echo "Error: <main_command> is required." >&2
         echo ""
         show_help
     fi
@@ -116,42 +120,32 @@ task_orchestrator() {
     execute "$MAIN_CMD" &
     MAIN_PID=$!
 
-    # Run the "during" command
-    execute "$DURING_CMD" &
-    DURING_PID=$!
+    # Run the "during" command with retries (if provided)
+    if [ -n "$DURING_CMD" ]; then
+        if ! retry_with_delay "$DURING_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
+            echo "Error: --during command failed after retries."
+            exit 1
+        fi
+    fi
 
     # Wait for the main command to finish
     wait $MAIN_PID
     MAIN_STATUS=$?
 
-    # Clean up the "during" command
-    kill $DURING_PID 2>/dev/null
-
     # Handle the main command's exit status
     if [ $MAIN_STATUS -eq 0 ]; then
         if [ -n "$ON_SUCCEED_CMD" ]; then
-            if ! execute "$ON_SUCCEED_CMD"; then
-                echo "Warning: --on-succeed command failed."
-                if [ -n "$ON_FAIL_CMD" ]; then
-                    echo "Attempting failover command after --on-succeed failure..."
-                    if retry_with_delay "$ON_FAIL_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
-                        exit 0 # Exit with success status if failover succeeds
-                    else
-                        exit 1 # Exit with failure status if failover fails
-                    fi
-                else
-                    exit 0 # Exit with success status (main command succeeded, --on-succeed failed, no --on-fail)
-                fi
+            if ! retry_with_delay "$ON_SUCCEED_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
+                echo "Error: --on-succeed command failed after retries."
+                exit 1
             fi
         fi
         exit 0 # Exit with success status (main command succeeded)
     else
         if [ -n "$ON_FAIL_CMD" ]; then
-            echo "Main command failed. Attempting failover command..."
-            if retry_with_delay "$ON_FAIL_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
-                exit 0 # Exit with success status if failover succeeds
-            else
-                exit 1 # Exit with failure status if failover fails
+            if ! retry_with_delay "$ON_FAIL_CMD" "$DELAY" "$MAX_ATTEMPTS"; then
+                echo "Error: --on-fail command failed after retries."
+                exit 1
             fi
         else
             exit $MAIN_STATUS # Exit with main command's status if no failover command
